@@ -10,7 +10,6 @@ namespace DO_AN_CUOI_KY
 {
     internal class UIHelper
     {
-        // Placeholder cho TextBox
         public static void SetPlaceholder(TextBox txt, string placeholder, bool isPassword = false)
         {
             txt.ForeColor = Color.Gray;
@@ -38,7 +37,6 @@ namespace DO_AN_CUOI_KY
             };
         }
 
-        // Hover button
         public static void AddHoverEffect(Button btn, Color normalColor, Color hoverColor)
         {
             btn.BackColor = normalColor;
@@ -149,7 +147,6 @@ namespace DO_AN_CUOI_KY
             return bmp;
         }
 
-        //
         public static Bitmap CreateFakeQR()
         {
             Bitmap bmp = new Bitmap(60, 60);
@@ -167,6 +164,29 @@ namespace DO_AN_CUOI_KY
             }
 
             return bmp;
+        }
+        public static void AddInput(Panel p, string label, TextBox txt, int x, int y)
+        {
+            Label lbl = new Label
+            {
+                Text = label,
+                Location = new Point(x, y - 22),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Color.FromArgb(64, 64, 64),
+                BackColor = Color.Transparent
+            };
+
+            txt.Location = new Point(x, y);
+            txt.Width = 180;
+            txt.Font = new Font("Segoe UI", 10);
+            txt.BorderStyle = BorderStyle.FixedSingle;
+
+            txt.Enter += (s, e) => { txt.BackColor = Color.White; };
+            txt.Leave += (s, e) => { txt.BackColor = Color.FromArgb(250, 250, 250); };
+
+            p.Controls.Add(lbl);
+            p.Controls.Add(txt);
         }
     }
 }

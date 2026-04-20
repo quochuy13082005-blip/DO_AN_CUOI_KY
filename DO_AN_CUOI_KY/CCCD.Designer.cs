@@ -93,8 +93,6 @@
         }
 
         #endregion
-
-        // KHAI BÁO BIẾN Ở ĐÂY (Designer sẽ nhận diện được)
         private System.Windows.Forms.Panel pnlHeader;
         private System.Windows.Forms.Button btnBack;
         private System.Windows.Forms.Label lblTitle;

@@ -11,7 +11,6 @@ namespace DO_AN_CUOI_KY
 
         static string[] phonePrefixes = { "090", "091", "098", "032", "035", "038", "070", "077", "083", "085" };
 
-        // ===== 63 TỈNH =====
         static Dictionary<string, string> provinceMap = new Dictionary<string, string>()
         {
             {"001","Hà Nội"},{"002","Hà Giang"},{"004","Cao Bằng"},{"006","Bắc Kạn"},
@@ -75,10 +74,8 @@ namespace DO_AN_CUOI_KY
                                         "Tài xế", "Công nhân","Luật sư","Lập trình viên", "Freelancer"
                                        };
 
-        // ===== TRÁNH TRÙNG ID =====
         static HashSet<string> usedIDs = new HashSet<string>();
 
-        // ===== TẠO CCCD =====
         public static string GenerateCitizenID(DateTime dob, string gender)
         {
             string[] provinceCodes = GetProvinceCodes();
@@ -109,12 +106,10 @@ namespace DO_AN_CUOI_KY
         public static string GeneratePhoneNumber()
         {
             string prefix = phonePrefixes[rnd.Next(phonePrefixes.Length)];
-            // Tạo 7 số ngẫu nhiên còn lại
-            string suffix = rnd.Next(0, 10000000).ToString("D7");
+            string suffix = rnd.Next(0, 10000000).ToString("D7"); 
             return prefix + suffix;
         }
 
-        // ===== SEED =====
         public static void Seed(BinarySearchTree tree, int n = 1000)
         {
             //Tài khoản cố dịnh để test admin 
@@ -141,7 +136,6 @@ namespace DO_AN_CUOI_KY
             tree.Insert(testUser);
 
             List<Citizen> tempSample = new List<Citizen>();
-            //Tạo ngẫu nhiên n công dân
             for (int i = 0; i < n; i++)
             {
                 string gender = genders[rnd.Next(genders.Length)];
@@ -166,40 +160,65 @@ namespace DO_AN_CUOI_KY
                 c.FullName = fullName;
                 c.Gender = gender;
                 c.DateOfBirth = dob;
-                c.Address = provinceMap[provinceCode];// Address đồng bộ với CCCD
+                c.Address = provinceMap[provinceCode];
                 c.PhoneNumber = GeneratePhoneNumber();
 
-                c.Username = "user" + i;
                 c.FatherID = "0" + rnd.Next(100000000, 999999999);
                 c.MotherID = "0" + rnd.Next(100000000, 999999999);
-                c.SpouseID = (rnd.Next(2) == 0) ? "" : "0" + rnd.Next(100000000, 999999999);
-                c.Password = c.FullName.Split(' ').Last() + "@" + c.CitizenID.Substring(c.CitizenID.Length - 3);
+                c.SpouseID = (rnd.Next(2) == 0) ? "null" : "0" + rnd.Next(100000000, 999999999);
                 c.Occupation = occupations[rnd.Next(occupations.Length)];
 
-                //quy tắt mật khẩu: tên cuối + @ + 3 số cuối CCCD
-                string[] parts = c.FullName.Split(' ');
-                c.Password = parts[parts.Length - 1] + "@" + c.CitizenID.Substring(c.CitizenID.Length - 3);
-                c.Occupation = occupations[rnd.Next(occupations.Length)];
-
-                // THIẾT LẬP MỐI QUAN HỆ THỰC: Lấy ID của những người đã tạo trước đó để làm cha/mẹ
-                if (existingIDs.Count > 10) 
+                //Taọ mật khẩu theo quy tắc: Tên không dấu + @ + 3 số cuối của ID  
+                string rawName = c.FullName.Split(' ').Last();
+                string nameNoSign = RemoveDiacritics(rawName);
+                string formattedName = char.ToUpper(nameNoSign[0]) + nameNoSign.Substring(1).ToLower();
+                string lastThreeId = c.CitizenID.Substring(c.CitizenID.Length - 3);
+                string finalPassword = formattedName + "@" + lastThreeId;
+                if (finalPassword.Length < 6)
                 {
-                    if (rnd.Next(100) < 60)
-                        c.FatherID = existingIDs[rnd.Next(existingIDs.Count)];
-                    else
-                        c.FatherID = "null";
+                    finalPassword = formattedName + "@" + lastThreeId;
+                }
+
+                c.Password = finalPassword;
+
+                if (existingIDs.Count > 10)
+                {
 
                     if (rnd.Next(100) < 60)
-                        c.MotherID = existingIDs[rnd.Next(existingIDs.Count)];
+                    {
+                        string father;
+                        do
+                        {
+                            father = existingIDs[rnd.Next(existingIDs.Count)];
+                        } while (father == c.CitizenID);
+
+                        c.FatherID = father;
+                    }
                     else
+                    {
+                        c.FatherID = "null";
+                    }
+
+                    if (rnd.Next(100) < 60)
+                    {
+                        string mother;
+                        do
+                        {
+                            mother = existingIDs[rnd.Next(existingIDs.Count)];
+                        } while (mother == c.CitizenID || mother == c.FatherID);
+
+                        c.MotherID = mother;
+                    }
+                    else
+                    {
                         c.MotherID = "null";
+                    }
                 }
                 else
                 {
                     c.FatherID = "null";
                     c.MotherID = "null";
                 }
-
                 tree.Insert(c);
                 existingIDs.Add(id);
 
@@ -219,7 +238,24 @@ namespace DO_AN_CUOI_KY
             Console.WriteLine("---------------------------------------\n");
             Console.WriteLine("Admin: admin001 / 123");
             Console.WriteLine("User Test: 001012000001 / An@001");
+        }
+        private static string RemoveDiacritics(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
 
+            string[] vietnameseSigns = new string[]
+            {
+                    "aAeEoOuUiIdDyY", "áàạảãâấầậẩẫăắằặẳẵ", "ÁÀẠẢÃÂẤẦẬẨẪĂẮẰẶẲẴ",
+                    "éèẹẻẽêếềệểễ", "ÉÈẸẺẼÊẾỀỆỂỄ", "óòọỏõôốồộổỗơớờợởỡ", "ÓÒỌỎÕÔỐỒỘỔỖƠỚỜỢỞỠ",
+                    "úùụủũưứừựửữ", "ÚÙỤỦŨƯỨỪỰỬỮ","íìịỉĩ", "ÍÌỊỈĨ", "đ", "Đ","ýỳỵỷỹ", "ÝỲỴỶỸ"
+            };
+
+            for (int i = 1; i < vietnameseSigns.Length; i++)
+            {
+                for (int j = 0; j < vietnameseSigns[i].Length; j++)
+                    text = text.Replace(vietnameseSigns[i][j], vietnameseSigns[0][i - 1]);
+            }
+            return text;
         }
     }
 }

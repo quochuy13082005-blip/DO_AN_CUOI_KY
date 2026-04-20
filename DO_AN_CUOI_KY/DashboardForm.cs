@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 
@@ -12,7 +13,8 @@ namespace DO_AN_CUOI_KY
         private DataGridView currentGrid;
 
         private TextBox txtCitizenID, txtCitizenName, txtCitizenPass, txtCitizenAddress, txtCitizenGender;
-        private TextBox txtCitizenFatherID, txtCitizenMotherID, txtCitizenOccupation, txtCitizenPhone;
+        private TextBox txtCitizenFatherID, txtCitizenMotherID, txtCitizenOccupation, txtCitizenPhone, txtCitizenSpouseID, txtCitizenNationality;
+        private DateTimePicker dtpCitizenDOB;
         public DashboardForm(Citizen c)
         {
             InitializeComponent();
@@ -35,40 +37,47 @@ namespace DO_AN_CUOI_KY
 
         private void ShowAdminUI()
         {
+            this.panelContent.BackgroundImage = Properties.Resources.background;
+            this.panelContent.BackgroundImageLayout = ImageLayout.Stretch;
+            this.panelContent.Padding = new Padding(30);
+            this.panelContent.Controls.Clear();
+
+            this.panelMenu.BackColor = Color.FromArgb(26, 37, 47);
+            this.panelContent.Padding = new Padding(30);
+            this.panelContent.Controls.Clear();
+
             // --- 1. Tạo Panel Header ---
             Panel pnlHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 170,
-                BackColor = Color.FromArgb(13, 71, 161)
+                Height = 180,
+                BackColor = Color.FromArgb(26, 37, 47), 
             };
 
             panelMenu.Controls.Add(pnlHeader);
 
-            // --- 2. Tạo các thành phần nội bộ (Đừng Dock ngay, hãy nạp theo thứ tự) ---
 
-            // Logo 
+            // --- 2. Tạo các thành phần nội bộ ---
+
             PictureBox picLogo = new PictureBox
             {
                 Image = Properties.Resources.logo_rm,
                 SizeMode = PictureBoxSizeMode.Zoom,
-                Height = 90,
+                Height = 100,
                 Dock = DockStyle.Top,
-                Padding = new Padding(0, 15, 0, 5)
+                Padding = new Padding(0, 20, 0, 0)
             };
 
-            // Label Hệ thống 
             Label lblSystem = new Label
             {
              Text = "HỆ THỐNG\nĐỊNH DANH ĐIỆN TỬ",
              ForeColor = Color.White,
-             Font = new Font("Segoe UI", 10, FontStyle.Regular),
+             Font = new Font("Segoe UI", 11, FontStyle.Bold),
              TextAlign = ContentAlignment.MiddleCenter,
              Dock = DockStyle.Top,
              Height = 50
             };
 
-            // Label Quyền (Nằm dưới Logo và Hệ thống)
             Label lblUser = new Label
             {
                 Text = "QUẢN TRỊ VIÊN",
@@ -78,67 +87,87 @@ namespace DO_AN_CUOI_KY
                 Dock = DockStyle.Top,
                 Height = 30
             };
-            // --- 3. ADD VÀO PANEL THEO THỨ TỰ NGƯỢC (Quan trọng) ---
             pnlHeader.Controls.Add(lblUser);
             pnlHeader.Controls.Add(lblSystem);
             pnlHeader.Controls.Add(picLogo);
 
-            AddButton("🔄 Làm mới", Color.FromArgb(52, 152, 219), (s, e) => { RefreshGrid(); });
-            AddButton("➕ Thêm mới", Color.FromArgb(46, 204, 113), AddCitizen);
-            AddButton("📝 Chỉnh sửa", Color.FromArgb(241, 196, 15), EditCitizen);
-            AddButton("🗑️ Xóa bỏ", Color.FromArgb(231, 76, 60), DeleteCitizen);
-            AddButton("👨‍👩‍👧 Phả hệ", Color.FromArgb(155, 89, 182), ViewFamily);
-            AddButton("Thoát", Color.FromArgb(44, 62, 80), Logout);
+            AddMenuButton("Thoát", Logout, panelMenu, true);
 
-            // --- Khu vực nhập liệu (Input Area) ---
+            Panel pnlButtonContainer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.Transparent,
+                Padding = new Padding(0, 60, 0, 0)
+            };
+            panelMenu.Controls.Add(pnlButtonContainer);
+            pnlButtonContainer.BringToFront(); 
+
+            AddMenuButton("🔄 Làm mới", (s, e) => { RefreshGrid(); }, pnlButtonContainer, false);
+            AddMenuButton("➕ Thêm mới", AddCitizen, pnlButtonContainer, false);
+            AddMenuButton("📝 Chỉnh sửa", EditCitizen, pnlButtonContainer, false);
+            AddMenuButton("🗑️ Xóa bỏ", DeleteCitizen, pnlButtonContainer, false);
+            AddMenuButton("👨‍👩‍👧 Phả hệ", ViewFamily, pnlButtonContainer, false);
+
+            // --- Khu vực nhập liệu ---
             GroupBox gbInput = new GroupBox
             {
                 Text = "📝 THÔNG TIN CÔNG DÂN",
                 Dock = DockStyle.Top,
-                Height = 180,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Height = 200,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
                 ForeColor = Color.FromArgb(44, 62, 80),
-                Padding = new Padding(10)
+                Padding = new Padding(10),
+                BackColor = Color.Transparent
             };
 
-            // Khởi tạo TextBoxes với Style phẳng
+            // Khởi tạo TextBoxes
             txtCitizenID = new TextBox() { Location = new Point(120, 35), Width = 150 };
-            txtCitizenName = new TextBox() { Location = new Point(380, 35), Width = 200 };
-            txtCitizenGender = new TextBox() { Location = new Point(650, 35), Width = 100 };
-
             txtCitizenPass = new TextBox() { Location = new Point(120, 75), Width = 150 };
-            txtCitizenAddress = new TextBox() { Location = new Point(380, 75), Width = 200 };
-            txtCitizenPhone = new TextBox() { Location = new Point(650, 75), Width = 150 };
-
             txtCitizenFatherID = new TextBox() { Location = new Point(120, 115), Width = 150 };
-            txtCitizenMotherID = new TextBox() { Location = new Point(380, 115), Width = 150 };
-            txtCitizenOccupation = new TextBox() { Location = new Point(650, 115), Width = 150 };
+            dtpCitizenDOB = new DateTimePicker() { Location = new Point(120, 155), Width = 150, Format = DateTimePickerFormat.Short };
 
-            // Thêm Label và TextBox vào GroupBox
+            txtCitizenName = new TextBox() { Location = new Point(400, 35), Width = 180 }; 
+            txtCitizenAddress = new TextBox() { Location = new Point(400, 75), Width = 180 };
+            txtCitizenMotherID = new TextBox() { Location = new Point(400, 115), Width = 180 };
+            txtCitizenSpouseID = new TextBox() { Location = new Point(400, 155), Width = 180 };
+
+            txtCitizenGender = new TextBox() { Location = new Point(720, 35), Width = 150 };
+            txtCitizenPhone = new TextBox() { Location = new Point(720, 75), Width = 150 };
+            txtCitizenOccupation = new TextBox() { Location = new Point(720, 115), Width = 150 };
+            txtCitizenNationality = new TextBox() { Location = new Point(720, 155), Width = 150 };
+
+
             gbInput.Controls.Add(new Label() { Text = "Số CCCD:", Location = new Point(25, 38), AutoSize = true });
             gbInput.Controls.Add(txtCitizenID);
-            gbInput.Controls.Add(new Label() { Text = "Họ và Tên:", Location = new Point(290, 38), AutoSize = true });
+            gbInput.Controls.Add(new Label() { Text = "Họ và Tên:", Location = new Point(310, 38), AutoSize = true });
             gbInput.Controls.Add(txtCitizenName);
-            gbInput.Controls.Add(new Label() { Text = "Giới tính:", Location = new Point(590, 38), AutoSize = true });
+            gbInput.Controls.Add(new Label() { Text = "Giới tính:", Location = new Point(620, 38), AutoSize = true });
             gbInput.Controls.Add(txtCitizenGender);
 
             gbInput.Controls.Add(new Label() { Text = "Mật khẩu:", Location = new Point(25, 78), AutoSize = true });
             gbInput.Controls.Add(txtCitizenPass);
-            gbInput.Controls.Add(new Label() { Text = "Quê quán:", Location = new Point(290, 78), AutoSize = true });
+            gbInput.Controls.Add(new Label() { Text = "Quê quán:", Location = new Point(310, 78), AutoSize = true });
             gbInput.Controls.Add(txtCitizenAddress);
-            gbInput.Controls.Add(new Label() { Text = "SĐT:", Location = new Point(590, 78), AutoSize = true });
+            gbInput.Controls.Add(new Label() { Text = "SĐT:", Location = new Point(620, 78), AutoSize = true });
             gbInput.Controls.Add(txtCitizenPhone);
 
             gbInput.Controls.Add(new Label() { Text = "ID Cha:", Location = new Point(25, 118), AutoSize = true });
             gbInput.Controls.Add(txtCitizenFatherID);
-            gbInput.Controls.Add(new Label() { Text = "ID Mẹ:", Location = new Point(290, 118), AutoSize = true });
+            gbInput.Controls.Add(new Label() { Text = "ID Mẹ:", Location = new Point(310, 118), AutoSize = true });
             gbInput.Controls.Add(txtCitizenMotherID);
-            gbInput.Controls.Add(new Label() { Text = "Nghề nghiệp:", Location = new Point(560, 118), AutoSize = true });
+            gbInput.Controls.Add(new Label() { Text = "Nghề nghiệp:", Location = new Point(595, 118), AutoSize = true });
             gbInput.Controls.Add(txtCitizenOccupation);
+
+            gbInput.Controls.Add(new Label() { Text = "Ngày sinh:", Location = new Point(25, 158), AutoSize = true });
+            gbInput.Controls.Add(dtpCitizenDOB);
+            gbInput.Controls.Add(new Label() { Text = "ID Vợ/Chồng:", Location = new Point(290, 158), AutoSize = true });
+            gbInput.Controls.Add(txtCitizenSpouseID);
+            gbInput.Controls.Add(new Label() { Text = "Quốc tịch:", Location = new Point(610, 158), AutoSize = true });
+            gbInput.Controls.Add(txtCitizenNationality);
 
             panelContent.Controls.Add(gbInput);
 
-            // --- Khu vực tìm kiếm (Search Bar) ---
+            // --- Khu vực tìm kiếm ---
             Panel searchPanel = new Panel() { Dock = DockStyle.Top, Height = 50, Padding = new Padding(10, 5, 10, 5) };
             TextBox txtSearch = new TextBox() { Location = new Point(120, 15), Width = 300, Font = new Font("Segoe UI", 10) };
             Button btnSearch = new Button()
@@ -189,6 +218,12 @@ namespace DO_AN_CUOI_KY
                     txtCitizenMotherID.Text = row.Cells["MotherID"].Value?.ToString();
                     txtCitizenOccupation.Text = row.Cells["Occupation"].Value?.ToString();
                     txtCitizenPhone.Text = row.Cells["PhoneNumber"].Value?.ToString();
+                    if (row.Cells["DateOfBirth"].Value is DateTime dob)
+                        dtpCitizenDOB.Value = dob;
+
+                    txtCitizenSpouseID.Text = row.Cells["SpouseID"].Value?.ToString();
+                    txtCitizenNationality.Text = row.Cells["Nationality"].Value?.ToString();
+
                 }
             };
 
@@ -214,32 +249,37 @@ namespace DO_AN_CUOI_KY
                 currentGrid.Columns["FullName"].HeaderText = "Họ và Tên";
                 currentGrid.Columns["DateOfBirth"].HeaderText = "Ngày sinh";
                 currentGrid.Columns["Gender"].HeaderText = "Giới tính";
-                currentGrid.Columns["Address"].HeaderText = "Địa chỉ";
-                currentGrid.Columns["Password"].HeaderText = "Mật khẩu";
+                currentGrid.Columns["PhoneNumber"].HeaderText = "SĐT";
+                currentGrid.Columns["Address"].HeaderText = "Quê quán";
+                currentGrid.Columns["Nationality"].HeaderText = "Quốc tịch";
                 currentGrid.Columns["Occupation"].HeaderText = "Nghề nghiệp";
                 currentGrid.Columns["FatherID"].HeaderText = "ID Cha";
                 currentGrid.Columns["MotherID"].HeaderText = "ID Mẹ";
-                if (currentGrid.Columns["PhoneNumber"] != null)
-                {
-                    currentGrid.Columns["PhoneNumber"].HeaderText = "Số điện thoại";
-                    currentGrid.Columns["PhoneNumber"].DisplayIndex = 3;
-                }
+                currentGrid.Columns["SpouseID"].HeaderText = "ID Vợ/Chồng";
+                currentGrid.Columns["Password"].HeaderText = "Mật khẩu";
 
-                currentGrid.Columns["FatherID"].DisplayIndex = 7;
-                currentGrid.Columns["MotherID"].DisplayIndex = 8;
+                currentGrid.Columns["CitizenID"].DisplayIndex = 0;
+                currentGrid.Columns["FullName"].DisplayIndex = 1;
+                currentGrid.Columns["DateOfBirth"].DisplayIndex = 2;
+                currentGrid.Columns["Gender"].DisplayIndex = 3;
+                currentGrid.Columns["Nationality"].DisplayIndex = 4;
+                currentGrid.Columns["Address"].DisplayIndex = 5;
+                currentGrid.Columns["PhoneNumber"].DisplayIndex = 6;
+                currentGrid.Columns["Occupation"].DisplayIndex = 7;
+                currentGrid.Columns["Password"].DisplayIndex = 8;
+                currentGrid.Columns["FatherID"].DisplayIndex =9 ;
+                currentGrid.Columns["MotherID"].DisplayIndex = 10;
+                currentGrid.Columns["SpouseID"].DisplayIndex = 11;
 
-                // Ẩn các cột quan hệ gia đình cho gọn bảng quản lý
-                if (currentGrid.Columns["SpouseID"] != null) currentGrid.Columns["SpouseID"].Visible = false;
-                if (currentGrid.Columns["Username"] != null) currentGrid.Columns["Username"].Visible = false;
-                if (currentGrid.Columns["Nationality"] != null) currentGrid.Columns["Nationality"].Visible = false;
+                currentGrid.Columns["DateOfBirth"].DefaultCellStyle.Format = "dd/MM/yyyy";
             }
         }
+
 
         private void AddCitizen(object sender, EventArgs e)
         {
             if (!IsInputValid()) return;
 
-            //Kiểm tra trùng
             Citizen existing = Program.Tree.Search(txtCitizenID.Text);
             if (existing != null)
             {
@@ -247,7 +287,7 @@ namespace DO_AN_CUOI_KY
                 return;
             }
 
-            //Kiểm tra tồn tại của IDcha và IDme
+            //Kiểm tra tồn tại của IDcha 
             string fatherID = txtCitizenFatherID.Text.Trim();
             if (!string.IsNullOrEmpty(fatherID) && fatherID.ToLower() != "null" && fatherID.ToLower() != "n/a")
             {
@@ -259,7 +299,7 @@ namespace DO_AN_CUOI_KY
             }
             else { fatherID = "N/A"; } 
 
-            // 3. Kiểm tra ID Mẹ (Nếu có nhập mới kiểm tra tồn tại)
+            // Kiểm tra ID Mẹ 
             string motherID = txtCitizenMotherID.Text.Trim();
             if (!string.IsNullOrEmpty(motherID) && motherID.ToLower() != "null" && motherID.ToLower() != "n/a")
             {
@@ -270,19 +310,32 @@ namespace DO_AN_CUOI_KY
                 }
             }
             else { motherID = "N/A"; }
+            // Kiểm tra ID Vợ/Chồng
+            string spouseID = txtCitizenSpouseID.Text.Trim();
+            if (!string.IsNullOrEmpty(motherID) && motherID.ToLower() != "null" && motherID.ToLower() != "n/a")
+            {
+                if (Program.Tree.Search(motherID) == null)
+                {
+                    MessageBox.Show("ID Vợ/Chồng không tồn tại! Để trống nếu không rõ.", "Lỗi quan hệ");
+                    return;
+                }
+            }
+            else { motherID = "N/A"; }
 
             Citizen c = new Citizen
             {
                 CitizenID = txtCitizenID.Text,
                 FullName = txtCitizenName.Text,
                 Password = txtCitizenPass.Text == "" ? "123@abc" : txtCitizenPass.Text,
-                Address = txtCitizenAddress.Text,
                 Gender = txtCitizenGender.Text,
-                DateOfBirth = DateTime.Now.AddYears(-18),
+                DateOfBirth = dtpCitizenDOB.Value,
+                Address = txtCitizenAddress.Text,
+                Nationality = txtCitizenNationality.Text,
+                Occupation = txtCitizenOccupation.Text,
+                PhoneNumber = txtCitizenPhone.Text,
                 FatherID = fatherID,
                 MotherID = motherID,
-                Occupation = txtCitizenOccupation.Text,
-                PhoneNumber = txtCitizenPhone.Text
+                SpouseID = spouseID
             };
 
             Program.Tree.Insert(c);
@@ -298,7 +351,7 @@ namespace DO_AN_CUOI_KY
 
             if (currentGrid.CurrentRow == null) return;
 
-            // Lấy ID từ Grid (ID là khóa không nên sửa)
+            // Lấy ID từ Grid 
             string id = currentGrid.CurrentRow.Cells["CitizenID"].Value.ToString();
 
             // Tìm đối tượng trong cây
@@ -310,10 +363,14 @@ namespace DO_AN_CUOI_KY
                           c.Password != txtCitizenPass.Text ||
                           c.Address != txtCitizenAddress.Text ||
                           c.Gender != txtCitizenGender.Text ||
+                          c.DateOfBirth.Date != dtpCitizenDOB.Value.Date || 
                           c.FatherID != txtCitizenFatherID.Text ||
                           c.MotherID != txtCitizenMotherID.Text ||
+                          c.SpouseID != txtCitizenSpouseID.Text || 
+                          c.Nationality != txtCitizenNationality.Text || 
                           c.Occupation != txtCitizenOccupation.Text ||
                           c.PhoneNumber != txtCitizenPhone.Text);
+
                 if (!isChanged)
                 {
                     MessageBox.Show("Dữ liệu không thay đổi!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -325,10 +382,13 @@ namespace DO_AN_CUOI_KY
                 c.Password = txtCitizenPass.Text;
                 c.Address = txtCitizenAddress.Text;
                 c.Gender = txtCitizenGender.Text;
+                c.DateOfBirth = dtpCitizenDOB.Value;
                 c.FatherID = txtCitizenFatherID.Text;
                 c.MotherID = txtCitizenMotherID.Text;
-                c.Occupation = txtCitizenOccupation.Text.Trim(); 
-                c.PhoneNumber = txtCitizenPhone.Text.Trim();   
+                c.SpouseID = txtCitizenSpouseID.Text;
+                c.Nationality = txtCitizenNationality.Text;
+                c.Occupation = txtCitizenOccupation.Text.Trim();
+                c.PhoneNumber = txtCitizenPhone.Text.Trim();
 
                 MessageBox.Show("Cập nhật thông tin công dân thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 txtCitizenID.ReadOnly = false; 
@@ -380,7 +440,6 @@ namespace DO_AN_CUOI_KY
             currentGrid.DataSource = null;
             currentGrid.DataSource = results;
 
-            // Nếu tìm thấy duy nhất 1 người, hiển thị lên TextBox
             if (results.Count == 1)
             {
                 Citizen c = results[0];
@@ -389,9 +448,14 @@ namespace DO_AN_CUOI_KY
                 txtCitizenPass.Text = c.Password;
                 txtCitizenAddress.Text = c.Address;
                 txtCitizenGender.Text = c.Gender;
+                txtCitizenOccupation.Text = c.Occupation;
                 txtCitizenFatherID.Text = c.FatherID;
                 txtCitizenMotherID.Text = c.MotherID;
-                txtCitizenOccupation.Text = c.Occupation;
+                txtCitizenPhone.Text = c.PhoneNumber;
+                if (c.DateOfBirth != DateTime.MinValue)
+                    dtpCitizenDOB.Value = c.DateOfBirth;
+                    txtCitizenSpouseID.Text = c.SpouseID;
+                txtCitizenNationality.Text = c.Nationality;
             }
         }
 
@@ -402,10 +466,13 @@ namespace DO_AN_CUOI_KY
             txtCitizenPass.Clear();
             txtCitizenAddress.Clear();
             txtCitizenGender.Clear();
-            txtCitizenFatherID.Clear();
+            dtpCitizenDOB.Value = DateTime.Now.AddYears(-18); 
             txtCitizenMotherID.Clear();
+            txtCitizenSpouseID.Clear();
+            txtCitizenNationality.Clear();
             txtCitizenOccupation.Clear();
             txtCitizenPhone.Clear();
+
         }
 
         private bool IsInputValid()
@@ -441,38 +508,40 @@ namespace DO_AN_CUOI_KY
         }
 
         // ================= HELPER & UI COMMON  =================
-        private void AddButton(string text, Color BackColor,  EventHandler click)
+        private void AddMenuButton(string text, EventHandler click, Control parent, bool isExit)
         {
-            Button btn = new Button();
-            btn.Text = "    " + text;
-            btn.Height = 50; 
-            btn.Dock = DockStyle.Top; 
-            btn.FlatStyle = FlatStyle.Flat;
-            btn.BackColor = BackColor;
-            btn.ForeColor = Color.Black;
-            btn.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-            btn.Cursor = Cursors.Hand;
-            btn.TextAlign = ContentAlignment.MiddleLeft;
+            Button btn = new Button
+            {
+                Text = text,
+                Height = 55,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Dock = isExit ? DockStyle.Bottom : DockStyle.Top
+            };
             btn.FlatAppearance.BorderSize = 0;
 
-            btn.Margin = new Padding(0, 2, 0, 0);
-
-            if (text == "Thoát")
+            if (isExit)
             {
-                btn.BackColor = Color.Firebrick;
+                btn.BackColor = Color.FromArgb(192, 57, 43); 
                 btn.ForeColor = Color.White;
-                btn.Dock = DockStyle.Bottom;
+                btn.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+                btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(231, 76, 60);
+            }
+            else
+            {
+                btn.BackColor = Color.Transparent;
+                btn.ForeColor = Color.White;
+                btn.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+                btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(44, 62, 80);
+                btn.FlatAppearance.MouseDownBackColor = Color.FromArgb(30, 40, 50);
             }
 
-            btn.MouseEnter += (s, e) => {
-                btn.Tag = btn.BackColor;
-                btn.BackColor = Color.LightGray; 
-            };
-            btn.MouseLeave += (s, e) => { btn.BackColor = (Color)btn.Tag; };
-
             btn.Click += click;
-            panelMenu.Controls.Add(btn);
-        }        
+            parent.Controls.Add(btn);
+
+            if (!isExit) btn.BringToFront(); 
+        }
 
         private void ShowList(object sender, EventArgs e)
         {
@@ -513,11 +582,13 @@ namespace DO_AN_CUOI_KY
         // ================= USER =================
         private void ShowUserUI()
         {
+            panelContent.BackgroundImage = Properties.Resources.background_dung;
+            panelContent.BackgroundImageLayout = ImageLayout.Stretch;
+            panelContent.Controls.Clear();
+
             panelMenu.Controls.Clear();
             panelMenu.BackColor = Color.FromArgb(20, 40, 100); 
 
-            panelContent.Controls.Clear();
-            panelContent.BackColor = Color.FromArgb(245, 245, 245);
 
             // ============================================================
             // LOGO & TÊN HỆ THỐNG
@@ -551,9 +622,14 @@ namespace DO_AN_CUOI_KY
             // MAIN DASHBOARD 
             // ============================================================
             // --- A. TOP PANEL ---
-            Panel pnlTopInfo = new Panel() { Dock = DockStyle.Top, Height = 100, BackColor = Color.FromArgb(192, 0, 0) };
+            Panel pnlTopInfo = new Panel() 
+            { 
+                Dock = DockStyle.Top, 
+                Height = 100,
+                BackColor = Color.FromArgb(220,192, 0, 0) 
+            };
 
-            // 1. Tên công dân - CĂN GIỮA main dashboard
+            // 1. Tên công dân 
             Label lblFullName = new Label()
             {
                 Text = currentUser.FullName.ToUpper(),
@@ -563,12 +639,12 @@ namespace DO_AN_CUOI_KY
                 Dock = DockStyle.Fill
             };
 
-            // 2. Nút thoát - TRÊN BÊN PHẢI
+            // 2. Nút thoát
             Button btnExitTop = new Button()
             {
                 Text = "Thoát",
                 Size = new Size(80, 35),
-                Location = new Point(pnlTopInfo.Width - 100, 10), // Vị trí tương đối
+                Location = new Point(pnlTopInfo.Width - 100, 10), 
                 BackColor = Color.White,
                 ForeColor = Color.FromArgb(192, 0, 0),
                 Font = new Font("Segoe UI", 9, FontStyle.Bold),
@@ -583,8 +659,13 @@ namespace DO_AN_CUOI_KY
             btnExitTop.BringToFront(); 
 
             // --- B. QR SIMULATION AREA ---
-
-            Panel pnlQR = new Panel() { Dock = DockStyle.Top, Height = 130, BackColor = Color.White, Padding = new Padding(10) };
+            Panel pnlQR = new Panel() 
+            { 
+                Dock = DockStyle.Top, 
+                Height = 130, 
+                BackColor = Color.FromArgb(180, 255, 255, 255), 
+                Padding = new Padding(10) 
+            };
 
             pnlQR.Paint += Panel_Paint_BoGoc_Nhe; 
 
@@ -600,7 +681,13 @@ namespace DO_AN_CUOI_KY
             pnlQR.Controls.Add(cardQR_DDDT);
 
             // --- C. BODY ---
-            FlowLayoutPanel flowBody = new FlowLayoutPanel() { Dock = DockStyle.Fill, Padding = new Padding(20), AutoScroll = true };
+            FlowLayoutPanel flowBody = new FlowLayoutPanel() 
+            { 
+                Dock = DockStyle.Fill,
+                Padding = new Padding(20), 
+                AutoScroll = true ,
+                BackColor = Color.Transparent
+            };
             panelContent.Controls.Add(flowBody);
             panelContent.Controls.Add(pnlQR);     
             panelContent.Controls.Add(pnlTopInfo); 
@@ -612,7 +699,7 @@ namespace DO_AN_CUOI_KY
             flowBody.Controls.Add(CreateServiceCard("GPLX", Properties.Resources.gplx, Dummy));
             flowBody.Controls.Add(CreateServiceCard("BHYT", Properties.Resources.bhyt ,Dummy));
             flowBody.Controls.Add(CreateServiceCard("Thông tin cư trú", Properties.Resources.ttct , Dummy));
-
+            flowBody.Controls.Add(CreateServiceCard("Đổi mật khẩu", Properties.Resources.password, ShowChangePassword));
 
             AddGroupTitle(flowBody, "Dịch vụ phổ biến");
             flowBody.Controls.Add(CreateServiceCard("Thủ tục\nhành chính", Properties.Resources.tthc ,Dummy));
@@ -628,24 +715,24 @@ namespace DO_AN_CUOI_KY
         }
 
         // ============================================================
-        // CÁC HÀM HỖ TRỢ (HELPER METHODS)
+        // CÁC HÀM HỖ TRỢ 
         // ============================================================
-
         private Panel CreateServiceCard(string title, Image avt, EventHandler clickEvent)
         {
             Panel card = new Panel
             {
-                Size = new Size(110, 120),
+                Size = new Size(125, 135),
                 BackColor = Color.White,
-                Margin = new Padding(12),
-                Cursor = Cursors.Hand
+                Margin = new Padding(15),
+                Cursor = Cursors.Hand,
+                Padding = new Padding(10)
+
             };
 
             card.Click += clickEvent;
 
-            // Bo góc thủ công cho Card
             card.Paint += (s, e) => {
-                int r = 15; // Độ bo góc
+                int r = 15; 
                 System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath();
                 gp.AddArc(0, 0, r, r, 180, 90);
                 gp.AddArc(card.Width - r, 0, r, r, 270, 90);
@@ -662,6 +749,7 @@ namespace DO_AN_CUOI_KY
             PictureBox picAvt = new PictureBox
             {
                 Image = avt,
+                Dock = DockStyle.Fill,
                 Size = new Size(45, 45),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 Location = new Point((card.Width - 50) / 2, 15),
@@ -677,7 +765,7 @@ namespace DO_AN_CUOI_KY
                 Dock = DockStyle.Bottom,
                 Height = 45,
                 Font = new Font("Segoe UI", 8, FontStyle.Bold),
-                ForeColor = Color.Black,
+                ForeColor = Color.FromArgb(64, 64, 64),
                 Enabled = false
 
             };
@@ -686,12 +774,10 @@ namespace DO_AN_CUOI_KY
             card.Controls.Add(picAvt);
             card.Controls.Add(lbl);
 
-            card.MouseEnter += (s, e) => { card.BackColor = Color.FromArgb(245, 245, 245); };
-            card.MouseLeave += (s, e) => { card.BackColor = Color.White; };
+            card.MouseEnter += (s, e) => { card.BackColor = Color.FromArgb(245, 245, 245); card.Invalidate(); };
+            card.MouseLeave += (s, e) => { card.BackColor = Color.White; card.Invalidate(); };
 
             return card;
-
-
         }
 
         private Panel CreateQRCard(string text, EventHandler clickEvent)
@@ -760,6 +846,151 @@ namespace DO_AN_CUOI_KY
             p.Region = new Region(gp);
         }
 
+        private void ShowChangePassword(object sender, EventArgs e)
+        {
+            Form f = new Form();
+            f.Text = "ĐỔI MẬT KHẨU";
+            f.Size = new Size(380, 520);
+            f.StartPosition = FormStartPosition.CenterParent;
+            f.FormBorderStyle = FormBorderStyle.FixedDialog;
+            f.MaximizeBox = false;
+            f.BackgroundImage = Properties.Resources.background_dung;
+            f.BackgroundImageLayout = ImageLayout.Stretch;
+
+            string currentCaptcha = "";
+
+            Label lblOld = new Label()
+            {
+                Text = "Mật khẩu hiện tại:",
+                Location = new Point(30, 20),
+                Width = 150,
+                BackColor = Color.Transparent,
+                ForeColor = Color.Black,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold)
+            };
+            TextBox txtOld = new TextBox()
+            {
+                Location = new Point(30, 45),
+                Width = 300,
+                PasswordChar = '●'
+            };
+
+            Label lblNew = new Label()
+            {
+                Text = "Mật khẩu mới:",
+                Location = new Point(30, 85),
+                Width = 150,
+                BackColor = Color.Transparent,
+                ForeColor = Color.Black,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold)
+            };
+            TextBox txtNew = new TextBox()
+            {
+                Location = new Point(30, 110),
+                Width = 300,
+                PasswordChar = '●'
+            };
+
+            Label lblPolicy = new Label()
+            {
+                Text = "⚠️ Quy định mật khẩu mới:\n" +
+                       "• Độ dài từ 6 ký tự trở lên\n" +
+                       "• Có chữ HOA, chữ thường và số\n" +
+                       "• Có ít nhất 1 ký tự đặc biệt (!@#$^*...)",
+                Location = new Point(30, 145),
+                Size = new Size(300, 70),
+                ForeColor = Color.DarkBlue,
+                BackColor = Color.FromArgb(180, 255, 255, 255),
+                Padding = new Padding(5),
+                Font = new Font("Segoe UI", 8, FontStyle.Italic)
+            };
+
+            Label lblCap = new Label()
+            {
+                Text = "Mã xác thực:",
+                Location = new Point(30, 240),
+                Width = 150,
+                BackColor = Color.Transparent,
+                ForeColor = Color.Black,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold)
+            };
+            PictureBox picCap = new PictureBox()
+            {
+                Location = new Point(30, 265),
+                Size = new Size(120, 40),
+                BorderStyle = BorderStyle.FixedSingle,
+                Cursor = Cursors.Hand,
+                BackColor = Color.White
+            };
+            TextBox txtCapInput = new TextBox()
+            {
+                Location = new Point(160, 275),
+                Size = new Size(170, 25),
+                Font = new Font("Segoe UI", 10)
+            };
+
+            Action RefreshCaptcha = () => { currentCaptcha = UIHelper.GenerateCaptchaImage(picCap); };
+            picCap.Click += (s, ev) => RefreshCaptcha();
+            RefreshCaptcha();
+
+
+            Button btnUpdate = new Button()
+            {
+                Text = "XÁC NHẬN ĐỔI MẬT KHẨU",
+                Location = new Point(30, 340),
+                Width = 300,
+                Height = 45,
+                BackColor = Color.FromArgb(20, 40, 100),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+
+            btnUpdate.Click += (se, ev) => {
+                string newPass = txtNew.Text;
+
+
+                if (txtCapInput.Text != currentCaptcha)
+                {
+                    MessageBox.Show("Mã xác thực không chính xác!", "Lỗi");
+                    RefreshCaptcha();
+                    return;
+                }
+
+
+                bool isValid = newPass.Length >= 6 &&
+                               newPass.Any(char.IsUpper) &&
+                               newPass.Any(char.IsLower) &&
+                               newPass.Any(char.IsDigit) &&
+                               newPass.Any(ch => !char.IsLetterOrDigit(ch));
+
+                if (!isValid)
+                {
+                    MessageBox.Show("Mật khẩu mới không đúng quy định!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+
+                if (txtOld.Text == currentUser.Password)
+                {
+
+                    currentUser.Password = newPass;
+
+                    MessageBox.Show("Cập nhật mật khẩu mới thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    f.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Mật khẩu hiện tại không chính xác!", "Lỗi");
+                    RefreshCaptcha();
+                }
+            };
+
+            f.Controls.AddRange(new Control[] { lblOld, txtOld, lblNew, txtNew, lblPolicy, lblCap, picCap, txtCapInput, btnUpdate });
+            f.ShowDialog();
+        }
+
         private void Dummy(object sender, EventArgs e)
         {
             MessageBox.Show("Chức năng đang phát triển","THÔNG BÁO",MessageBoxButtons.OK,MessageBoxIcon.Information);
@@ -770,6 +1001,5 @@ namespace DO_AN_CUOI_KY
             CCCD form = new CCCD(currentUser);
             form.ShowDialog();
         }
-
     }
 }

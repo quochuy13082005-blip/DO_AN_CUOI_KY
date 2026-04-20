@@ -9,7 +9,6 @@ namespace DO_AN_CUOI_KY
         public RegisterForm()
         {
             InitializeComponent();
-            // Gán sự kiện Click cho các nút
             btnRegister.Click += BtnRegister_Click;
             btnCancel.Click += (s, e) => this.Close();
         }
@@ -25,14 +24,14 @@ namespace DO_AN_CUOI_KY
                 return;
             }
 
-            // 2. Kiểm tra trùng ID trong cây BST
-            if (Program.Tree.Search(txtID.Text) != null)
+            // 2. Kiểm tra trùng ID
+            if (Program.Tree.Search(txtID.Text.Trim()) != null)
             {
-                MessageBox.Show("Số CCCD này đã tồn tại!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Số CCCD này đã tồn tại trên hệ thống!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            // 3. Tạo đối tượng Citizen mới
+            // 3. Tạo đối tượng Citizen mới 
             Citizen newCitizen = new Citizen
             {
                 CitizenID = txtID.Text.Trim(),
@@ -41,22 +40,31 @@ namespace DO_AN_CUOI_KY
                 Gender = cbGender.SelectedItem.ToString(),
                 Address = txtAddress.Text.Trim(),
                 PhoneNumber = txtPhone.Text.Trim(),
-                FatherID = string.IsNullOrWhiteSpace(txtFatherID.Text) ? "null" : txtFatherID.Text.Trim(),
-                MotherID = string.IsNullOrWhiteSpace(txtMotherID.Text) ? "null" : txtMotherID.Text.Trim(),
+                FatherID = "null", 
+                MotherID = "null",
                 Occupation = "Tự do"
             };
 
-            // Quy tắc mật khẩu: Tên cuối + @ + 3 số cuối CCCD
-            string[] nameParts = newCitizen.FullName.Split(' ');
-            string lastName = nameParts.Last();
-            string idSuffix = newCitizen.CitizenID.Length >= 3 ? newCitizen.CitizenID.Substring(newCitizen.CitizenID.Length - 3) : "123";
-            newCitizen.Password = lastName + "@" + idSuffix;
+            // 4. Tạo mật khẩu tự động
+            try
+            {
+                string[] nameParts = newCitizen.FullName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                string lastName = nameParts.Length > 0 ? nameParts.Last() : "User";
+                string idSuffix = newCitizen.CitizenID.Length >= 3 ?
+                                 newCitizen.CitizenID.Substring(newCitizen.CitizenID.Length - 3) : "123";
+                newCitizen.Password = lastName + "@" + idSuffix;
 
-            // 4. Chèn vào cây BST
-            Program.Tree.Insert(newCitizen);
+                // 5. Chèn vào cây BST
+                Program.Tree.Insert(newCitizen);
 
-            MessageBox.Show($"Đăng ký thành công!\nMật khẩu của bạn là: {newCitizen.Password}", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            this.Close();
+                MessageBox.Show($"Đăng ký thành công!\nMật khẩu của bạn là: {newCitizen.Password}",
+                                "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Có lỗi xảy ra: " + ex.Message, "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

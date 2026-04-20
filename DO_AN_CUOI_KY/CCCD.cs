@@ -35,7 +35,6 @@ namespace DO_AN_CUOI_KY
         {
             btnBack.Click += (s, e) => this.Close();
 
-            // Nếu bạn có TextBox nào kéo tay trong Designer thì hàm này sẽ format chúng
             foreach (Control c in pnlCard.Controls)
             {
                 if (c is TextBox txt)
@@ -50,7 +49,7 @@ namespace DO_AN_CUOI_KY
 
         private void LoadData()
         {
-            pnlFooter.Controls.Clear(); 
+            pnlFooter.Controls.Clear();
             pnlFooter.Controls.Add(CreateMenuOption("→ Căn cước điện tử"));
             pnlFooter.Controls.Add(CreateMenuOption("→ Lịch sử cấp thẻ CC/CCCD/CMND"));
         }
@@ -73,16 +72,20 @@ namespace DO_AN_CUOI_KY
             if (_user == null) return;
 
             pnlCard.Controls.Clear();
+
+            pnlCard.BackgroundImage = Properties.Resources.background;
+            pnlCard.BackgroundImageLayout = ImageLayout.Stretch;
+
             Label lblHeaderCard = new Label
             {
                 Text = "CĂN CƯỚC ĐIỆN TỬ",
-                Font = new Font("Time New Roman", 12F, FontStyle.Bold),
-                ForeColor = Color.Red, 
+                Font = new Font("Times New Roman", 12F, FontStyle.Bold),
+                ForeColor = Color.Red,
                 AutoSize = false,
-                Width = pnlCard.Width, 
+                Width = pnlCard.Width,
                 Height = 35,
                 TextAlign = ContentAlignment.MiddleCenter,
-                Location = new Point(0, 5), 
+                Location = new Point(0, 5),
                 BackColor = Color.Transparent
             };
             pnlCard.Controls.Add(lblHeaderCard);
@@ -90,29 +93,24 @@ namespace DO_AN_CUOI_KY
             PictureBox picAvatar = new PictureBox
             {
                 Size = new Size(110, 140),
-                Location = new Point(25, 90), 
+                Location = new Point(25, 90),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BackColor = Color.FromArgb(230, 230, 230),
                 BorderStyle = BorderStyle.FixedSingle
             };
 
-            
-            // Thử load ảnh nếu class Citizen có trường Image
-            try { picAvatar.Image = _user.Avatar; } catch { /* Không có ảnh thì thôi */ }
+
+            try { picAvatar.Image = _user.Avatar; } catch { }
             pnlCard.Controls.Add(picAvatar);
 
-            // 2. Render Thông tin
             float startX = 145;
 
-            // Số CCCD
             AddInfoLabel("Số / No.: " + (_user.CitizenID ?? ""), new Point((int)startX, 65), true, 11);
 
-            // Họ tên
             AddInfoLabel("Họ và tên / Full name:", new Point((int)startX, 95), false, 8);
             string name = _user.FullName ?? "";
             AddInfoLabel(name.ToUpper(), new Point((int)startX, 110), true, 11);
 
-            // Ngày sinh 
             string dob = "";
             try
             {
@@ -123,15 +121,12 @@ namespace DO_AN_CUOI_KY
 
             AddInfoLabel("Ngày sinh / Date of birth: " + dob, new Point((int)startX, 140), true, 9);
 
-            // Giới tính & Quốc tịch
             AddInfoLabel("Giới tính / Sex: " + (_user.Gender ?? "Nam"), new Point((int)startX, 160), true, 9);
             AddInfoLabel("Quốc tịch / Nationality: Việt Nam", new Point(275, 160), true, 9);
 
-            // Quê quán 
             AddInfoLabel("Quê quán / Place of origin:", new Point((int)startX, 185), false, 8);
             AddInfoLabel(_user.Address ?? "", new Point((int)startX, 200), true, 9);
 
-            // Thường trú
             AddInfoLabel("Nơi thường trú / Place of residence:", new Point((int)startX, 225), false, 8);
             AddInfoLabel(_user.Address ?? "", new Point((int)startX, 240), true, 9);
         }

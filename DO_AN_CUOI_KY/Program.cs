@@ -18,37 +18,30 @@ namespace DO_AN_CUOI_KY
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            while (true)
+            bool keepRunning = true;
+            while (keepRunning)
             {
-                LoginForm login = new LoginForm();
-                DialogResult loginResult = login.ShowDialog();
-
-                if (loginResult == DialogResult.OK)
+                using (LoginForm login = new LoginForm())
                 {
-                    Citizen user = login.AuthenticatedUser;
-                    login.Dispose(); 
-
-                    // Mở Dashboard
-                    DashboardForm dashboard = new DashboardForm(user);
-                    DialogResult dashResult = dashboard.ShowDialog();
-
-                    if (dashResult == DialogResult.OK)
+                    if (login.ShowDialog() == DialogResult.OK)
                     {
-                        dashboard.Dispose();
-                        continue;
+                        Citizen user = login.AuthenticatedUser;
+
+                        using (DashboardForm dashboard = new DashboardForm(user))
+                        {
+                            if (dashboard.ShowDialog() != DialogResult.OK)
+                            {
+                                keepRunning = false;
+                            }
+                        }
                     }
                     else
                     {
-                        dashboard.Dispose();
-                        break;
+                        keepRunning = false;
                     }
-                }
-                else
-                {
-                    login.Dispose();
-                    break;
                 }
             }
         }
     }
 }
+
