@@ -6,66 +6,42 @@ namespace DO_AN_CUOI_KY
 {
     public partial class CCCD : Form
     {
-        private dynamic _user;
 
-        public CCCD(dynamic user)
+        private dynamic _user; // Sử dụng dynamic để linh hoạt với các kiểu dữ liệu khác nhau (Citizen, User, v.v.)
+
+        // =========================================================
+        // 1. HÀM KHỞI TẠO 
+        // =========================================================
+
+        public CCCD(Citizen user)   
         {
             InitializeComponent();
-
-
-            this.Size = new Size(700, 650);
-
-            if (pnlCard != null)
-            {
-                pnlCard.Width = 650;
-
-                pnlCard.Height = 300;
-
-                pnlCard.Left = (this.ClientSize.Width - pnlCard.Width) / 2;
-            }
-            this.Icon = Properties.Resources.logo;
             this._user = user;
 
+            SetupFormLayout();
             RegisterEvents();
             LoadData();
             DisplayIdentityInfo();
         }
-
-        private void RegisterEvents()
+        // =========================================================
+        // 2. THIẾT LẬP GIAO DIỆN
+        // =========================================================
+        private void SetupFormLayout()
         {
-            btnBack.Click += (s, e) => this.Close();
+            this.Size = new Size(700, 650);
+            this.Icon = Properties.Resources.logo;
 
-            foreach (Control c in pnlCard.Controls)
+            if (pnlCard != null)
             {
-                if (c is TextBox txt)
-                {
-                    txt.BorderStyle = BorderStyle.None;
-                    txt.BackColor = Color.FromArgb(240, 240, 240);
-                    txt.ReadOnly = true;
-                    txt.Font = new Font("Segoe UI", 9, FontStyle.Bold);
-                }
+                pnlCard.Width = 650;
+                pnlCard.Height = 300;
+                pnlCard.Left = (this.ClientSize.Width - pnlCard.Width) / 2;
             }
         }
 
-        private void LoadData()
-        {
-            pnlFooter.Controls.Clear();
-            pnlFooter.Controls.Add(CreateMenuOption("→ Căn cước điện tử"));
-            pnlFooter.Controls.Add(CreateMenuOption("→ Lịch sử cấp thẻ CC/CCCD/CMND"));
-        }
-
-        private Label CreateMenuOption(string text)
-        {
-            return new Label
-            {
-                Text = text,
-                Font = new Font("Segoe UI", 11, FontStyle.Bold),
-                ForeColor = Color.FromArgb(192, 0, 0),
-                Size = new Size(400, 40),
-                TextAlign = ContentAlignment.MiddleLeft,
-                Cursor = Cursors.Hand
-            };
-        }
+        // =========================================================
+        // 3. HIỂN THỊ DỮ LIỆU 
+        // =========================================================
 
         private void DisplayIdentityInfo()
         {
@@ -131,6 +107,32 @@ namespace DO_AN_CUOI_KY
             AddInfoLabel(_user.Address ?? "", new Point((int)startX, 240), true, 9);
         }
 
+        private void LoadData()
+        {
+            pnlFooter.Controls.Clear();
+            pnlFooter.Controls.Add(CreateMenuOption("→ Căn cước điện tử"));
+            pnlFooter.Controls.Add(CreateMenuOption("→ Lịch sử cấp thẻ CC/CCCD/CMND"));
+        }
+
+        // =========================================================
+        // 5. SỰ KIỆN VÀ HÀM HỖ TRỢ 
+        // =========================================================
+
+        private void RegisterEvents()
+        {
+            btnBack.Click += (s, e) => this.Close();
+
+            foreach (Control c in pnlCard.Controls)
+            {
+                if (c is TextBox txt)
+                {
+                    txt.BorderStyle = BorderStyle.None;
+                    txt.BackColor = Color.FromArgb(240, 240, 240);
+                    txt.ReadOnly = true;
+                    txt.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                }
+            }
+        }
         private void AddInfoLabel(string text, Point location, bool isBold, int fontSize)
         {
             Label lbl = new Label
@@ -145,5 +147,18 @@ namespace DO_AN_CUOI_KY
             pnlCard.Controls.Add(lbl);
             lbl.BringToFront();
         }
+
+        private Label CreateMenuOption(string text)
+        {
+            return new Label
+            {
+                Text = text,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.FromArgb(192, 0, 0),
+                Size = new Size(400, 40),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Cursor = Cursors.Hand
+            };
+        }   
     }
 }

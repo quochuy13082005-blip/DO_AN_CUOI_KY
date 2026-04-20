@@ -6,7 +6,9 @@ namespace DO_AN_CUOI_KY
 {
     public class CitizenSeeder
     {
-
+        // =========================================================
+        // 1. DỮ LIỆU MẪU
+        // =========================================================
         static Random rnd = new Random();
 
         static string[] phonePrefixes = { "090", "091", "098", "032", "035", "038", "070", "077", "083", "085" };
@@ -76,6 +78,9 @@ namespace DO_AN_CUOI_KY
 
         static HashSet<string> usedIDs = new HashSet<string>();
 
+        // =========================================================
+        // 2. HÀM SINH DỮ LIỆU NGẪU NHIÊN 
+        // =========================================================
         public static string GenerateCitizenID(DateTime dob, string gender)
         {
             string[] provinceCodes = GetProvinceCodes();
@@ -103,6 +108,7 @@ namespace DO_AN_CUOI_KY
             usedIDs.Add(id);
             return id;
         }
+
         public static string GeneratePhoneNumber()
         {
             string prefix = phonePrefixes[rnd.Next(phonePrefixes.Length)];
@@ -110,31 +116,14 @@ namespace DO_AN_CUOI_KY
             return prefix + suffix;
         }
 
+        // =========================================================
+        // 3. LOGIC XỬ LÝ CHÍNH 
+        // =========================================================
         public static void Seed(BinarySearchTree tree, int n = 1000)
         {
-            //Tài khoản cố dịnh để test admin 
-            Citizen admin = new Citizen();
-            admin.CitizenID = "admin001";
-            admin.FullName = "Nguyễn Văn An";
-            admin.Password = "123";
-            admin.Gender = "Nam";
-            admin.DateOfBirth = new DateTime(2000, 1, 1);
-            admin.Address = "Trung tâm quản lý";
-            tree.Insert(admin);
+            CreateFixedAccounts(tree);// --- Tạo tài khoản cố định để Test ---
 
             List<string> existingIDs = new List<string>();
-
-            //Tài khoản cố dịnh để test user
-            Citizen testUser = new Citizen();
-            testUser.CitizenID = "001012000001";
-            testUser.FullName = "Nguyễn Văn An";
-            testUser.Password = "An@001";
-            testUser.Gender = "Nam";
-            testUser.DateOfBirth = new DateTime(2000, 1, 1);
-            testUser.Address = provinceMap["001"];
-            testUser.PhoneNumber = "0987654321";
-            tree.Insert(testUser);
-
             List<Citizen> tempSample = new List<Citizen>();
             for (int i = 0; i < n; i++)
             {
@@ -162,10 +151,6 @@ namespace DO_AN_CUOI_KY
                 c.DateOfBirth = dob;
                 c.Address = provinceMap[provinceCode];
                 c.PhoneNumber = GeneratePhoneNumber();
-
-                c.FatherID = "0" + rnd.Next(100000000, 999999999);
-                c.MotherID = "0" + rnd.Next(100000000, 999999999);
-                c.SpouseID = (rnd.Next(2) == 0) ? "null" : "0" + rnd.Next(100000000, 999999999);
                 c.Occupation = occupations[rnd.Next(occupations.Length)];
 
                 //Taọ mật khẩu theo quy tắc: Tên không dấu + @ + 3 số cuối của ID  
@@ -181,44 +166,8 @@ namespace DO_AN_CUOI_KY
 
                 c.Password = finalPassword;
 
-                if (existingIDs.Count > 10)
-                {
+                AssignRandomFamily(c, existingIDs);
 
-                    if (rnd.Next(100) < 60)
-                    {
-                        string father;
-                        do
-                        {
-                            father = existingIDs[rnd.Next(existingIDs.Count)];
-                        } while (father == c.CitizenID);
-
-                        c.FatherID = father;
-                    }
-                    else
-                    {
-                        c.FatherID = "null";
-                    }
-
-                    if (rnd.Next(100) < 60)
-                    {
-                        string mother;
-                        do
-                        {
-                            mother = existingIDs[rnd.Next(existingIDs.Count)];
-                        } while (mother == c.CitizenID || mother == c.FatherID);
-
-                        c.MotherID = mother;
-                    }
-                    else
-                    {
-                        c.MotherID = "null";
-                    }
-                }
-                else
-                {
-                    c.FatherID = "null";
-                    c.MotherID = "null";
-                }
                 tree.Insert(c);
                 existingIDs.Add(id);
 
@@ -226,8 +175,79 @@ namespace DO_AN_CUOI_KY
                 {
                     tempSample.Add(c);
                 }
-
             }
+            PrintSeedResults(tempSample);
+        }
+
+        // =========================================================
+        // 4. CÁC HÀM HỖ TRỢ 
+        // =========================================================
+        private static void CreateFixedAccounts(BinarySearchTree tree)
+        {
+            // Admin
+            tree.Insert(new Citizen
+            {
+                CitizenID = "admin001",
+                FullName = "Quản Trị Viên",
+                Password = "123",
+                Address = "Hệ thống"
+            });
+            // User Test
+            tree.Insert(new Citizen
+            {
+                CitizenID = "001012000001",
+                FullName = "Nguyễn Văn An",
+                Password = "An@001",
+                DateOfBirth = new DateTime(2000, 1, 1),
+                Address = "Hà Nội"
+            });
+        }
+
+        private static void AssignRandomFamily(Citizen c, List<string> existingIDs)
+        {
+            if (existingIDs.Count > 10)
+            {
+
+                if (rnd.Next(100) < 60)
+                {
+                    string father;
+                    do
+                    {
+                        father = existingIDs[rnd.Next(existingIDs.Count)];
+                    } while (father == c.CitizenID);
+
+                    c.FatherID = father;
+                }
+                else
+                {
+                    c.FatherID = "null";
+                }
+
+                if (rnd.Next(100) < 60)
+                {
+                    string mother;
+                    do
+                    {
+                        mother = existingIDs[rnd.Next(existingIDs.Count)];
+                    } while (mother == c.CitizenID || mother == c.FatherID);
+
+                    c.MotherID = mother;
+                }
+                else
+                {
+                    c.MotherID = "null";
+                }
+            }
+            else
+            {
+                c.FatherID = "null";
+                c.MotherID = "null";
+            }
+            c.SpouseID = (rnd.Next(2) == 0) ? "null" : "0" + rnd.Next(100000000, 999999999);
+        }
+
+        private static void PrintSeedResults(List<Citizen> tempSample)
+        {
             Console.WriteLine("\n=== DANH SÁCH 5 CÔNG DÂN NGẪU NHIÊN VỪA TẠO ===");
             foreach (Citizen citizen in tempSample)
             {
@@ -239,6 +259,7 @@ namespace DO_AN_CUOI_KY
             Console.WriteLine("Admin: admin001 / 123");
             Console.WriteLine("User Test: 001012000001 / An@001");
         }
+
         private static string RemoveDiacritics(string text)
         {
             if (string.IsNullOrEmpty(text)) return text;

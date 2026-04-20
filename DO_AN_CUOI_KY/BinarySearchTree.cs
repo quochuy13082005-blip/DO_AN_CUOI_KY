@@ -4,13 +4,52 @@ namespace DO_AN_CUOI_KY
 {
     public class BinarySearchTree
     {
-        public BSTNode Root;
+        // =========================================================
+        // 1. Thành phần dữ liệu và cấu trúc của node       
+        // =========================================================
+        private BSTNode root;
 
-        // ================= INSERT =================
+        public BSTNode Root
+        {
+            get
+            {
+                return root;
+            }
+        }
+
+
+        // =========================================================
+        // 2. Phương thức công khai: Insert, Delete, Search
+        // =========================================================
+
         public void Insert(Citizen citizen)
         {
-            Root = InsertRec(Root, citizen);
+            root = InsertRec(root, citizen);
         }
+
+        public void Delete(string citizenID)
+        {
+            root = DeleteRec(root, citizenID);
+        }
+
+        public Citizen Search(string citizenID)
+        {
+            BSTNode node = Root;
+
+            while (node != null)
+            {
+                int cmp = string.Compare(citizenID, node.Data.CitizenID);
+
+                if (cmp == 0) return node.Data;
+                if (cmp < 0) node = node.Left;
+                else node = node.Right;
+            }
+
+            return null;
+        }
+        // =========================================================
+        // 3. Logic chèn và xóa node (có cân bằng AVL)
+        // =========================================================
 
         private BSTNode InsertRec(BSTNode node, Citizen citizen)
         {
@@ -55,73 +94,8 @@ namespace DO_AN_CUOI_KY
             return node;
         }
 
-        // ================= SEARCH =================
-        public Citizen Search(string citizenID)
-        {
-            BSTNode node = Root;
-
-            while (node != null)
-            {
-                int cmp = string.Compare(citizenID, node.Data.CitizenID);
-
-                if (cmp == 0) return node.Data;
-                if (cmp < 0) node = node.Left;
-                else node = node.Right;
-            }
-
-            return null;
-        }
-
-        // ================= AVL HELPERS =================
-
-        private int GetHeight(BSTNode node)
-        {
-            if (node == null) return 0;
-            return node.Height;
-        }
-
-        private int GetBalance(BSTNode node)
-        {
-            if (node == null) return 0;
-            return GetHeight(node.Left) - GetHeight(node.Right);
-        }
-
-        private BSTNode RightRotate(BSTNode y)
-        {
-            BSTNode x = y.Left;
-            BSTNode t2 = x.Right;
-
-            x.Right = y;
-            y.Left = t2;
-
-            y.Height = 1 + Math.Max(GetHeight(y.Left), GetHeight(y.Right));
-            x.Height = 1 + Math.Max(GetHeight(x.Left), GetHeight(x.Right));
-
-            return x;
-        }
-
-        private BSTNode LeftRotate(BSTNode x)
-        {
-            BSTNode y = x.Right;
-            BSTNode t2 = y.Left;
-
-            y.Left = x;
-            x.Right = t2;
-
-            x.Height = 1 + Math.Max(GetHeight(x.Left), GetHeight(x.Right));
-            y.Height = 1 + Math.Max(GetHeight(y.Left), GetHeight(y.Right));
-
-            return y;
-        }
-
-        public void Delete(string citizenID)
-        {
-            Root = DeleteRec(Root, citizenID);
-        }
-
         private BSTNode DeleteRec(BSTNode root, string citizenID)
         {
-            // ===== BST DELETE =====
             if (root == null) return null;
 
             int cmp = string.Compare(citizenID, root.Data.CitizenID);
@@ -186,7 +160,50 @@ namespace DO_AN_CUOI_KY
             return root;
         }
 
-        // ===== TÌM NODE NHỎ NHẤT =====
+        // =========================================================
+        // 4. Hàm hỗ trợ: xoay và tính toán chiều cao, cân bằng
+        // =========================================================
+
+        private BSTNode RightRotate(BSTNode y)
+        {
+            BSTNode x = y.Left;
+            BSTNode t2 = x.Right;
+
+            x.Right = y;
+            y.Left = t2;
+
+            y.Height = 1 + Math.Max(GetHeight(y.Left), GetHeight(y.Right));
+            x.Height = 1 + Math.Max(GetHeight(x.Left), GetHeight(x.Right));
+
+            return x;
+        }
+
+        private BSTNode LeftRotate(BSTNode x)
+        {
+            BSTNode y = x.Right;
+            BSTNode t2 = y.Left;
+
+            y.Left = x;
+            x.Right = t2;
+
+            x.Height = 1 + Math.Max(GetHeight(x.Left), GetHeight(x.Right));
+            y.Height = 1 + Math.Max(GetHeight(y.Left), GetHeight(y.Right));
+
+            return y;
+        }
+
+        private int GetHeight(BSTNode node)
+        {
+            if (node == null) return 0;
+            return node.Height;
+        }
+
+        private int GetBalance(BSTNode node)
+        {
+            if (node == null) return 0;
+            return GetHeight(node.Left) - GetHeight(node.Right);
+        }
+
         private BSTNode FindMin(BSTNode node)
         {
             while (node.Left != null)

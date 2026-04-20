@@ -21,23 +21,28 @@ namespace DO_AN_CUOI_KY
         {
             this.Icon = Properties.Resources.logo;
 
-            ApplyRegion(pnlInputID, 15);
-            ApplyRegion(pnlInputPass, 15);
-            ApplyRegion(BtnLogin, 10);
+            //Bo góc cho form và các control
+            UIHelper.ApplyRegion(pnlInputID, 15);
+            UIHelper.ApplyRegion(pnlInputPass, 15);
+            UIHelper.ApplyRegion(BtnLogin, 10);
 
+            //Cấu hình placeholder
             UIHelper.SetPlaceholder(txtCitizenID, "Số định danh");
             UIHelper.SetPlaceholder(txtPass, "Mật khẩu", true);
             UIHelper.SetPlaceholder(txtCaptcha, "Mã xác thực");
 
+            // Sự kiện
             picShowPass.Click += TogglePasswordVisibility;
             picCaptcha.Click += (s, e) => GenerateCaptcha();
             BtnLogin.Click += BtnLogin_Click;
             BtnRegister.Click += BtnRegister_Click;
             this.Shown += (s, e) => GenerateCaptcha();
 
+            // Hiệu ứng tương tác
             UIHelper.AddHoverEffect(BtnLogin, Color.FromArgb(13, 71, 161), Color.FromArgb(25, 118, 210));
+            loadingBar.Visible = false;
         }
-
+        // Xử lý sự kiện đăng nhập
         private async void BtnLogin_Click(object sender, EventArgs e)
         {
             if (!ValidateInputs()) return;
@@ -46,7 +51,7 @@ namespace DO_AN_CUOI_KY
 
             if (user == null || user.Password != txtPass.Text)
             {
-                await ShakeFormAsync();
+                await UIHelper.ShakeFormAsync(this);
                 MessageBox.Show("Thông tin đăng nhập không chính xác!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 GenerateCaptcha();
                 return;
@@ -64,29 +69,39 @@ namespace DO_AN_CUOI_KY
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
-
+        // Xử lý sự kiện đăng ký
         private void BtnRegister_Click(object sender, EventArgs e)
         {
             new RegisterForm().ShowDialog();
         }
-
+        // Xử lý sự kiện quên mật khẩu
         private void BtnForgotPassword_Click_1(object sender, EventArgs e)
         {
             MessageBox.Show("Vui lòng liên hệ quản trị viên: 0798.***.***", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
-
+        // Xử lý sự kiện hiển thị mật khẩu
         private void TogglePasswordVisibility(object sender, EventArgs e)
         {
-            bool isCurrentlyVisible = (txtPass.PasswordChar == '\0');
-            txtPass.PasswordChar = isCurrentlyVisible ? '●' : '\0';
-            picShowPass.Image = isCurrentlyVisible ? Properties.Resources.eye_close : Properties.Resources.eye_open;
-        }
+            if (txtPass.ForeColor == Color.Gray) return;
+            bool isCurrentlyHidden = (txtPass.PasswordChar == '●' || txtPass.PasswordChar == '*');
 
+            if (isCurrentlyHidden)
+            {
+                txtPass.PasswordChar = '\0'; 
+                picShowPass.Image = Properties.Resources.eye_close; 
+            }
+            else
+            {
+                txtPass.PasswordChar = '●'; 
+                picShowPass.Image = Properties.Resources.eye_open; 
+            }
+        }
+        // Tạo mã Captcha mới
         private void GenerateCaptcha()
         {
             _captchaText = UIHelper.GenerateCaptchaImage(picCaptcha);
         }
-
+        // Kiểm tra tính hợp lệ của các trường nhập liệu
         private bool ValidateInputs()
         {
             if (string.IsNullOrWhiteSpace(txtCitizenID.Text) || txtCitizenID.Text.Contains("Số định danh"))
@@ -102,39 +117,11 @@ namespace DO_AN_CUOI_KY
             }
             return true;
         }
-
+        // Hiển thị thông báo lỗi
         private bool Error(string msg)
         {
             MessageBox.Show(msg, "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return false;
-        }
-
-        private void ApplyRegion(Control control, int radius)
-        {
-            control.Paint += (s, e) =>
-            {
-                using (GraphicsPath path = new GraphicsPath())
-                {
-                    path.AddArc(0, 0, radius, radius, 180, 90);
-                    path.AddArc(control.Width - radius, 0, radius, radius, 270, 90);
-                    path.AddArc(control.Width - radius, control.Height - radius, radius, radius, 0, 90);
-                    path.AddArc(0, control.Height - radius, radius, radius, 90, 90);
-                    control.Region = new Region(path);
-                }
-            };
-        }
-
-        private async Task ShakeFormAsync()
-        {
-            Point oldLoc = this.Location;
-            for (int i = 0; i < 5; i++)
-            {
-                this.Location = new Point(oldLoc.X + 10, oldLoc.Y);
-                await Task.Delay(20);
-                this.Location = new Point(oldLoc.X - 10, oldLoc.Y);
-                await Task.Delay(20);
-            }
-            this.Location = oldLoc;
         }
     }
 }
