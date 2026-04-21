@@ -62,7 +62,6 @@
     </Compile>
     <Compile Include="Citizen.cs" />
     <Compile Include="CitizenSeeder.cs" />
-    <Compile Include="CitizenView.cs" />
     <Compile Include="DashboardForm.cs">
       <SubType>Form</SubType>
     </Compile>

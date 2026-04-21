@@ -40,7 +40,7 @@ namespace DO_AN_CUOI_KY
             Gender = "Nam";
             Nationality = "Việt Nam";
 
-            Password = "123";
+            Password = "";
             PhoneNumber = "";
             Address = "";
 

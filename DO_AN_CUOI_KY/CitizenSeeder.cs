@@ -123,8 +123,8 @@ namespace DO_AN_CUOI_KY
         {
             CreateFixedAccounts(tree);// --- Tạo tài khoản cố định để Test ---
 
-            List<string> existingIDs = new List<string>();
             List<Citizen> tempSample = new List<Citizen>();
+            List<Citizen> allCitizens = new List<Citizen>();
             for (int i = 0; i < n; i++)
             {
                 string gender = genders[rnd.Next(genders.Length)];
@@ -159,22 +159,22 @@ namespace DO_AN_CUOI_KY
                 string formattedName = char.ToUpper(nameNoSign[0]) + nameNoSign.Substring(1).ToLower();
                 string lastThreeId = c.CitizenID.Substring(c.CitizenID.Length - 3);
                 string finalPassword = formattedName + "@" + lastThreeId;
+
+                allCitizens.Add(c);
+
                 if (finalPassword.Length < 6)
                 {
                     finalPassword = formattedName + "@" + lastThreeId;
                 }
 
                 c.Password = finalPassword;
+            }
+            AssignFamilyLogic(allCitizens);
+            AssignSpouseLogic(allCitizens);
 
-                AssignRandomFamily(c, existingIDs);
-
-                tree.Insert(c);
-                existingIDs.Add(id);
-
-                if (tempSample.Count < 5)
-                {
-                    tempSample.Add(c);
-                }
+            for (int i = 0; i < allCitizens.Count; i++)
+            {
+                tree.Insert(allCitizens[i]);
             }
             PrintSeedResults(tempSample);
         }
@@ -203,47 +203,86 @@ namespace DO_AN_CUOI_KY
             });
         }
 
-        private static void AssignRandomFamily(Citizen c, List<string> existingIDs)
+        static void AssignFamilyLogic(List<Citizen> list)
         {
-            if (existingIDs.Count > 10)
+            for (int i = 0; i < list.Count; i++)
             {
+                Citizen child = list[i];
 
-                if (rnd.Next(100) < 60)
+                List<Citizen> fathers = list
+                    .Where(p => p.Gender == "Nam" &&
+                                p.DateOfBirth <= child.DateOfBirth.AddYears(-18))
+                    .ToList();
+
+                List<Citizen> mothers = list
+                    .Where(p => p.Gender == "Nữ" &&
+                                p.DateOfBirth <= child.DateOfBirth.AddYears(-18))
+                    .ToList();
+
+                if (fathers.Count > 0 && mothers.Count > 0)
                 {
-                    string father;
-                    do
-                    {
-                        father = existingIDs[rnd.Next(existingIDs.Count)];
-                    } while (father == c.CitizenID);
+                    Citizen father = fathers[rnd.Next(fathers.Count)];
+                    Citizen mother = mothers[rnd.Next(mothers.Count)];
 
-                    c.FatherID = father;
+                    if (father.CitizenID != child.CitizenID &&
+                        mother.CitizenID != child.CitizenID)
+                    {
+                        child.FatherID = father.CitizenID;
+                        child.MotherID = mother.CitizenID;
+                    }
                 }
                 else
                 {
-                    c.FatherID = "null";
-                }
-
-                if (rnd.Next(100) < 60)
-                {
-                    string mother;
-                    do
-                    {
-                        mother = existingIDs[rnd.Next(existingIDs.Count)];
-                    } while (mother == c.CitizenID || mother == c.FatherID);
-
-                    c.MotherID = mother;
-                }
-                else
-                {
-                    c.MotherID = "null";
+                    child.FatherID = "null";
+                    child.MotherID = "null";
                 }
             }
-            else
+        }
+
+        static void AssignSpouseLogic(List<Citizen> list)
+        {
+            List<Citizen> males = list
+                .Where(x => x.Gender == "Nam" && x.SpouseID == "null")
+                .ToList();
+
+            List<Citizen> females = list
+                .Where(x => x.Gender == "Nữ" && x.SpouseID == "null")
+                .ToList();
+
+            foreach (Citizen male in males)
             {
-                c.FatherID = "null";
-                c.MotherID = "null";
+                if (male.DateOfBirth > DateTime.Now.AddYears(-18)) continue;
+
+                List<Citizen> candidates = new List<Citizen>();
+
+                foreach (Citizen female in females)
+                {
+                    if (female.SpouseID != "null") continue;
+
+                    if (female.DateOfBirth > DateTime.Now.AddYears(-18)) continue;
+
+                    double ageDiff = Math.Abs((female.DateOfBirth - male.DateOfBirth).TotalDays);
+
+                    if (ageDiff <= 3650) 
+                    {
+                        if (female.CitizenID != male.FatherID &&
+                            female.CitizenID != male.MotherID &&
+                            male.CitizenID != female.FatherID &&
+                            male.CitizenID != female.MotherID)
+                        {
+                            candidates.Add(female);
+                        }
+                    }
+                }
+
+                if (candidates.Count > 0 && rnd.Next(100) < 40)
+                {
+                    Citizen wife = candidates[rnd.Next(candidates.Count)];
+
+                    male.SpouseID = wife.CitizenID;
+                    wife.SpouseID = male.CitizenID;
+                }
             }
-            c.SpouseID = (rnd.Next(2) == 0) ? "null" : "0" + rnd.Next(100000000, 999999999);
         }
 
         private static void PrintSeedResults(List<Citizen> tempSample)
