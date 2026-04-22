@@ -88,12 +88,12 @@ namespace DO_AN_CUOI_KY
             if (isCurrentlyHidden)
             {
                 txtPass.PasswordChar = '\0'; 
-                picShowPass.Image = Properties.Resources.eye_close; 
+                picShowPass.Image = Properties.Resources.eye_open; 
             }
             else
             {
                 txtPass.PasswordChar = '●'; 
-                picShowPass.Image = Properties.Resources.eye_open; 
+                picShowPass.Image = Properties.Resources.eye_close; 
             }
         }
         // Tạo mã Captcha mới

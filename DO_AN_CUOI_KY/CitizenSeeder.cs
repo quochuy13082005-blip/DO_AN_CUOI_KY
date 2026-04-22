@@ -13,7 +13,7 @@ namespace DO_AN_CUOI_KY
 
         static string[] phonePrefixes = { "090", "091", "098", "032", "035", "038", "070", "077", "083", "085" };
 
-        static Dictionary<string, string> provinceMap = new Dictionary<string, string>()
+        public static Dictionary<string, string> provinceMap = new Dictionary<string, string>()
         {
             {"001","Hà Nội"},{"002","Hà Giang"},{"004","Cao Bằng"},{"006","Bắc Kạn"},
             {"008","Tuyên Quang"},{"010","Lào Cai"},{"011","Điện Biên"},{"012","Lai Châu"},

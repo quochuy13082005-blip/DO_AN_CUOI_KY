@@ -16,9 +16,10 @@ namespace DO_AN_CUOI_KY
         private DataGridView currentGrid;
 
         // Các TextBox để nhập liệu công dân
-        private TextBox txtCitizenID, txtCitizenName, txtCitizenPass, txtCitizenAddress, txtCitizenGender;
+        private TextBox txtCitizenID, txtCitizenName, txtCitizenPass, txtCitizenAddress;
         private TextBox txtCitizenFatherID, txtCitizenMotherID, txtCitizenOccupation, txtCitizenPhone, txtCitizenSpouseID, txtCitizenNationality;
         private DateTimePicker dtpCitizenDOB;
+        private ComboBox cbCitizenGender;
 
         // ===== HÀM KHỞI TẠO ===== 
         public DashboardForm(Citizen c)
@@ -119,7 +120,8 @@ namespace DO_AN_CUOI_KY
             txtCitizenMotherID = new TextBox() { Location = new Point(400, 115), Width = 180 };
             txtCitizenSpouseID = new TextBox() { Location = new Point(400, 155), Width = 180 };
 
-            txtCitizenGender = new TextBox() { Location = new Point(720, 35), Width = 150 };
+            cbCitizenGender = new ComboBox() { Location = new Point(720, 35), Width = 150 };
+            cbCitizenGender.Items.AddRange(new string[] { "Nam", "Nữ" });
             txtCitizenPhone = new TextBox() { Location = new Point(720, 75), Width = 150 };
             txtCitizenOccupation = new TextBox() { Location = new Point(720, 115), Width = 150 };
             txtCitizenNationality = new TextBox() { Location = new Point(720, 155), Width = 150 };
@@ -130,7 +132,7 @@ namespace DO_AN_CUOI_KY
             gbInput.Controls.Add(new Label() { Text = "Họ và Tên:", Location = new Point(310, 38), AutoSize = true });
             gbInput.Controls.Add(txtCitizenName);
             gbInput.Controls.Add(new Label() { Text = "Giới tính:", Location = new Point(620, 38), AutoSize = true });
-            gbInput.Controls.Add(txtCitizenGender);
+            gbInput.Controls.Add(cbCitizenGender);
 
             gbInput.Controls.Add(new Label() { Text = "Mật khẩu:", Location = new Point(25, 78), AutoSize = true });
             gbInput.Controls.Add(txtCitizenPass);
@@ -189,12 +191,20 @@ namespace DO_AN_CUOI_KY
                 {
                     DataGridViewRow row = currentGrid.Rows[e.RowIndex];
                     txtCitizenID.Text = row.Cells["CitizenID"].Value?.ToString(); txtCitizenName.Text = row.Cells["FullName"].Value?.ToString();
-                    txtCitizenGender.Text = row.Cells["Gender"].Value?.ToString(); txtCitizenPass.Text = row.Cells["Password"].Value?.ToString();
-                    txtCitizenAddress.Text = row.Cells["Address"].Value?.ToString(); txtCitizenFatherID.Text = row.Cells["FatherID"].Value?.ToString();
-                    txtCitizenMotherID.Text = row.Cells["MotherID"].Value?.ToString(); txtCitizenOccupation.Text = row.Cells["Occupation"].Value?.ToString();
-                    txtCitizenPhone.Text = row.Cells["PhoneNumber"].Value?.ToString();
-                    if (row.Cells["DateOfBirth"].Value is DateTime dob) dtpCitizenDOB.Value = dob;
+                    txtCitizenPass.Text = row.Cells["Password"].Value?.ToString(); txtCitizenAddress.Text = row.Cells["Address"].Value?.ToString(); 
+                    txtCitizenFatherID.Text = row.Cells["FatherID"].Value?.ToString(); txtCitizenMotherID.Text = row.Cells["MotherID"].Value?.ToString(); 
+                    txtCitizenOccupation.Text = row.Cells["Occupation"].Value?.ToString(); txtCitizenPhone.Text = row.Cells["PhoneNumber"].Value?.ToString();
                     txtCitizenSpouseID.Text = row.Cells["SpouseID"].Value?.ToString(); txtCitizenNationality.Text = row.Cells["Nationality"].Value?.ToString();
+                    // Hiển thị ngày sinh trong DateTimePicker
+                    if (row.Cells["DateOfBirth"].Value is DateTime dob) dtpCitizenDOB.Value = dob;
+                    // Hiển thị giới tính trong ComboBox
+                    if (cbCitizenGender != null)
+                    {
+                        string genderInGrid = GetVal(row, "Gender").Trim();
+                        int index = cbCitizenGender.FindStringExact(genderInGrid);
+                        cbCitizenGender.SelectedIndex = index;
+                    }
+
                 }
             };
 
@@ -237,12 +247,42 @@ namespace DO_AN_CUOI_KY
         //2. Thêm công dân mới
         private void AddCitizen(object sender, EventArgs e)
         {
+            // -----Kiểm tra tính hợp lệ của dữ liệu nhập vào-----
             if (!IsInputValid()) return;
 
             Citizen existing = Program.Tree.Search(txtCitizenID.Text);
             if (existing != null)
             {
                 MessageBox.Show("Số Citizen này đã tồn tại trong hệ thống!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            // Kiểm tra định dạng địa chỉ và trích xuất tỉnh
+            string citizenID = txtCitizenID.Text.Trim();
+            string address = txtCitizenAddress.Text.Trim();
+
+            if (!IsAddressValid(address, out string inputProvince))
+            {
+                MessageBox.Show("Địa chỉ phải đúng định dạng: Số nhà, Tên đường, Phường, Tỉnh/Thành", "Lỗi định dạng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            // Lấy mã tỉnh từ CCCD (3 số đầu)
+            string provinceCode = citizenID.Length >= 3 ? citizenID.Substring(0, 3) : "";
+
+            // Kiểm tra logic khớp mã tỉnh từ DataLoader.provinceMap
+            if (CitizenSeeder.provinceMap.TryGetValue(provinceCode, out string expectedProvince))
+            {
+                // So sánh tỉnh từ địa chỉ (inputProvince) với tỉnh thực tế (expectedProvince)
+                if (!inputProvince.ToLower().Contains(expectedProvince.ToLower()))
+                {
+                    MessageBox.Show($"Mã CCCD '{provinceCode}' thuộc về tỉnh/TP: {expectedProvince}.\n" +
+                                    $"Địa chỉ bạn nhập là '{inputProvince}' không khớp!",
+                                    "Lỗi logic địa phương", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+            }
+            else
+            {
+                MessageBox.Show("Mã tỉnh trên CCCD không tồn tại trong hệ thống!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -252,11 +292,11 @@ namespace DO_AN_CUOI_KY
             {
                 if (Program.Tree.Search(fatherID) == null)
                 {
-                    MessageBox.Show("ID Cha không tồn tại! Để trống nếu không rõ.", "Lỗi quan hệ");
+                    MessageBox.Show("ID Cha không tồn tại! Để trống nếu không rõ.", "Lỗi quan hệ", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
             }
-            else { fatherID = "N/A"; } 
+            else { fatherID = "N/A"; }
 
             // Kiểm tra ID Mẹ 
             string motherID = txtCitizenMotherID.Text.Trim();
@@ -275,7 +315,7 @@ namespace DO_AN_CUOI_KY
             {
                 if (Program.Tree.Search(motherID) == null)
                 {
-                    MessageBox.Show("ID Vợ/Chồng không tồn tại! Để trống nếu không rõ.", "Lỗi quan hệ");
+                    MessageBox.Show("ID Vợ/Chồng không tồn tại! Để trống nếu không rõ.", "Lỗi quan hệ", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
             }
@@ -283,18 +323,23 @@ namespace DO_AN_CUOI_KY
 
             Citizen c = new Citizen
             {
-                CitizenID = txtCitizenID.Text, FullName = txtCitizenName.Text,
+                CitizenID = txtCitizenID.Text,
+                FullName = txtCitizenName.Text,
                 Password = txtCitizenPass.Text == "" ? "123@abc" : txtCitizenPass.Text,
-                Gender = txtCitizenGender.Text, DateOfBirth = dtpCitizenDOB.Value,
-                Address = txtCitizenAddress.Text, Nationality = txtCitizenNationality.Text,
-                Occupation = txtCitizenOccupation.Text, PhoneNumber = txtCitizenPhone.Text,
-                FatherID = fatherID, MotherID = motherID, SpouseID = spouseID
+                Gender = cbCitizenGender.SelectedItem.ToString(),
+                DateOfBirth = dtpCitizenDOB.Value,
+                Address = txtCitizenAddress.Text,
+                Nationality = txtCitizenNationality.Text,
+                Occupation = txtCitizenOccupation.Text,
+                PhoneNumber = txtCitizenPhone.Text,
+                FatherID = fatherID,
+                MotherID = motherID,
+                SpouseID = spouseID
             };
 
             Program.Tree.Insert(c);
             MessageBox.Show("Đã thêm công dân:" + c.FullName);
             ClearTextBoxes();
-
             RefreshGrid();
         }
 
@@ -313,8 +358,10 @@ namespace DO_AN_CUOI_KY
             
             if (c != null)
             {
+                string selectedGender = cbCitizenGender.Text;
+
                 bool isChanged = (c.FullName != txtCitizenName.Text || c.Password != txtCitizenPass.Text ||
-                          c.Address != txtCitizenAddress.Text || c.Gender != txtCitizenGender.Text ||
+                          c.Address != txtCitizenAddress.Text || c.Gender != selectedGender ||
                           c.DateOfBirth.Date != dtpCitizenDOB.Value.Date || c.FatherID != txtCitizenFatherID.Text ||
                           c.MotherID != txtCitizenMotherID.Text || c.SpouseID != txtCitizenSpouseID.Text || 
                           c.Nationality != txtCitizenNationality.Text || c.Occupation != txtCitizenOccupation.Text ||
@@ -327,7 +374,7 @@ namespace DO_AN_CUOI_KY
                 }
 
                 c.FullName = txtCitizenName.Text; c.Password = txtCitizenPass.Text;
-                c.Address = txtCitizenAddress.Text; c.Gender = txtCitizenGender.Text;
+                c.Address = txtCitizenAddress.Text; c.Gender = selectedGender;
                 c.DateOfBirth = dtpCitizenDOB.Value; c.FatherID = txtCitizenFatherID.Text;
                 c.MotherID = txtCitizenMotherID.Text; c.SpouseID = txtCitizenSpouseID.Text;
                 c.Nationality = txtCitizenNationality.Text;
@@ -389,7 +436,7 @@ namespace DO_AN_CUOI_KY
                 Citizen c = results[0];
                 txtCitizenID.Text = c.CitizenID; txtCitizenName.Text = c.FullName;
                 txtCitizenPass.Text = c.Password; txtCitizenAddress.Text = c.Address;
-                txtCitizenGender.Text = c.Gender; txtCitizenOccupation.Text = c.Occupation;
+                cbCitizenGender.Text = c.Gender; txtCitizenOccupation.Text = c.Occupation;
                 txtCitizenFatherID.Text = c.FatherID; txtCitizenMotherID.Text = c.MotherID;
                 txtCitizenPhone.Text = c.PhoneNumber;
                 if (c.DateOfBirth != DateTime.MinValue) dtpCitizenDOB.Value = c.DateOfBirth;
@@ -401,7 +448,7 @@ namespace DO_AN_CUOI_KY
         private void ClearTextBoxes()
         {
             txtCitizenID.Clear(); txtCitizenName.Clear(); txtCitizenPass.Clear();
-            txtCitizenAddress.Clear(); txtCitizenGender.Clear(); dtpCitizenDOB.Value = DateTime.Now.AddYears(-18); 
+            txtCitizenAddress.Clear(); cbCitizenGender.Items.Clear(); dtpCitizenDOB.Value = DateTime.Now.AddYears(-18); 
             txtCitizenMotherID.Clear(); txtCitizenSpouseID.Clear(); txtCitizenNationality.Clear();
             txtCitizenOccupation.Clear(); txtCitizenPhone.Clear();
         }
@@ -411,7 +458,7 @@ namespace DO_AN_CUOI_KY
         {
             if (string.IsNullOrWhiteSpace(txtCitizenName.Text) ||
                 string.IsNullOrWhiteSpace(txtCitizenAddress.Text) ||
-                string.IsNullOrWhiteSpace(txtCitizenGender.Text) ||
+                string.IsNullOrWhiteSpace(cbCitizenGender.Text) ||
                 string.IsNullOrWhiteSpace (txtCitizenPhone.Text))
             {
                 MessageBox.Show("Vui lòng cung cấp đầy đủ các thông tin bắt buộc:\n" +
@@ -451,7 +498,14 @@ namespace DO_AN_CUOI_KY
             panelContent.Controls.Clear();
             panelContent.Controls.Add(currentGrid);
         }
-
+        private string GetVal(DataGridViewRow row, string colName)
+        {
+            if (row.Cells[colName]?.Value != null)
+            {
+                return row.Cells[colName].Value.ToString();
+            }
+            return "";
+        }
         private void ViewFamily(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(txtCitizenID.Text)) return;
@@ -466,6 +520,20 @@ namespace DO_AN_CUOI_KY
                              $"- Mẹ: {(m != null ? m.FullName : "Không rõ")}";
             MessageBox.Show(relation, "Thông tin phả hệ");
         }
+        private bool IsAddressValid(string address, out string detectedProvince)
+        {
+            detectedProvince = "";
+            if (string.IsNullOrWhiteSpace(address)) return false;
+
+            // Giả định định dạng: "Số 1, Đường ABC, Phường XYZ, Hà Nội"
+            string[] parts = address.Split(',');
+
+            if (parts.Length < 4) return false; // Không đủ 4 cấp
+
+            detectedProvince = parts[parts.Length - 1].Trim();
+            return true;
+        }
+
 
         // =========================================================
         // 3. USER
