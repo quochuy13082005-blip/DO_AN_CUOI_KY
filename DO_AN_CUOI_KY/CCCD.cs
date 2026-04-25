@@ -72,12 +72,11 @@ namespace DO_AN_CUOI_KY
                 Location = new Point(25, 90),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BackColor = Color.FromArgb(230, 230, 230),
-                BorderStyle = BorderStyle.FixedSingle
+                BorderStyle = BorderStyle.FixedSingle,
+                Image = Properties.Resources.avata_citizen
             };
-
-
-            try { picAvatar.Image = _user.Avatar; } catch { }
             pnlCard.Controls.Add(picAvatar);
+
 
             float startX = 145;
 
