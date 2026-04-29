@@ -82,7 +82,6 @@
     <Compile Include="RegisterForm.Designer.cs">
       <DependentUpon>RegisterForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="SecurityHelper.cs" />
     <Compile Include="UIHelper.cs" />
     <EmbeddedResource Include="CCCD.resx">
       <DependentUpon>CCCD.cs</DependentUpon>
